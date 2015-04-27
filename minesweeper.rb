@@ -1,5 +1,7 @@
 require 'yaml'
 
+
+
 class Tile
   attr_reader :neighbors, :location, :view, :is_bomb, :board
 
@@ -133,11 +135,13 @@ class Board
 end
 
 class Game
-  attr_reader :win, :lose, :board, :saved
+  attr_reader :win, :lose, :board
+  attr_accessor :saved
 
-  def initialize
-    @board = Board.new(self)
+  def initialize(board = nil)
+    @board = Board.new(self) unless board
     @lose = false
+    @saved = false
   end
 
   def losing
@@ -146,7 +150,7 @@ class Game
   end
 
   def over?
-    lose || win? || saved
+    lose || win? || @saved
   end
 
   def win?
@@ -154,11 +158,11 @@ class Game
   end
 
   def run
-    board.render
     until over?
-      take_turn
       board.render
+      take_turn
     end
+    board.render
     if win?
       puts "You Win!"
     end
@@ -171,10 +175,11 @@ class Game
     j = response[1].to_i
     tile = board.return_tile(i, j)
     if response == ["save"]
-      @saved == true
+      @saved = true
       File.open("saved_game.yml", "w") do |f|
         f.puts self.to_yaml
       end
+      puts "Game saved."
     elsif response.length > 2
         tile.flag
     else
@@ -182,7 +187,21 @@ class Game
     end
   end
 
+
 end
 
-new_game = Game.new
-new_game.run
+
+if __FILE__ == $PROGRAM_NAME
+  if ARGV.empty?
+    new_game = Game.new
+    new_game.run
+  else
+    until ARGV.empty?
+      ARGV.shift
+    end
+    saved_game = YAML::load(File.readlines("saved_game.yml").join(""))
+    saved_game.saved = false
+    saved_game.run
+
+  end
+end
