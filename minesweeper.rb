@@ -15,25 +15,38 @@ class Tile
     @is_bomb
   end
 
-  def reveal
-    count = neighbor_bomb_count
-    if is_bomb
-      @view = "X"
-      board.lose
-    elsif @view != '*' && @view != 'F'
-      return
-    elsif count == 0
-      @view = "_"
-      board.increment_revealed_count
-      neighbors_array = board.get_neighbors(@neighbors)
-      neighbors_array.each do |neighbor|
-        neighbor.reveal
-      end
-    else
-      board.increment_revealed_count
-      @view = "#{count}"
-    end
+  def revealed?
+    @revealed
   end
+
+  def flagged?
+    @flagged
+  end
+
+  def reveal
+    @revealed = true
+  end
+
+  #
+  # def reveal
+  #   count = neighbor_bomb_count
+  #   if is_bomb
+  #     @view = "X"
+  #     board.lose
+  #   elsif @view != '*' && @view != 'F'
+  #     return
+  #   elsif count == 0
+  #     @view = "_"
+  #     board.increment_revealed_count
+  #     neighbors_array = board.get_neighbors(@neighbors)
+  #     neighbors_array.each do |neighbor|
+  #       neighbor.reveal
+  #     end
+  #   else
+  #     board.increment_revealed_count
+  #     @view = "#{count}"
+  #   end
+  # end
 
   def generate_neighbors
     neighbor_array = []
@@ -47,7 +60,7 @@ class Tile
       coordinate.all? { |location| location.between?(0, @magnitude-1) }
     end
 
-    @neighbors = neighbor_array.reject { |neighbor| neighbor == @location }
+    neighbor_array.reject { |neighbor| neighbor == @location }
   end
 
   def dot_sum_array(arr1, arr2)
@@ -60,8 +73,7 @@ class Tile
   end
 
   def neighbor_bomb_count
-    generate_neighbors
-    immediate_neighbors = board.get_neighbors(@neighbors)
+    immediate_neighbors = board.get_neighbors(generate_neighbors)
     number_of_neighbors = 0
     immediate_neighbors.each do |neighbor|
       number_of_neighbors += 1 if neighbor.is_bomb
@@ -92,12 +104,10 @@ class Board
     generate_tiles(options)
   end
 
-
   def generate_tiles(options)
     total = options[:magnitude] ** 2
     bombs = options[:bombs]
     bomb = (Array.new(total - bombs) { false } + Array.new(bombs) { true }).shuffle
-
 
     (0...options[:magnitude]).each do |i|
       (0...options[:magnitude]).each do |j|
@@ -139,6 +149,21 @@ class Board
   end
 
 
+  def reveal(pos)
+
+    # reveal the tile at this position
+
+    # if the tile's bomb_count == 0 add to queue
+
+    # iterate through and reveal its neighbors
+
+    # if its neighbors have bomb_count == 0 and !revealed? add to queue
+
+    # no matter what, reveal each neighbor
+
+    # continue until queue is empty
+  end
+
   def get_neighbors(arr)
     result = []
     arr.each do |coordinates|
@@ -152,6 +177,15 @@ class Board
   def return_tile(i,j)
     return tiles[i][j]
   end
+
+  def lose?
+
+  end
+
+  def win?
+
+  end
+
 
   def lose
     game.losing
@@ -178,18 +212,18 @@ class Game
     @saved = false
   end
 
-  def losing
-    puts "You Lose!"
-    @lose = true
-  end
+  # def losing
+  #   puts "You Lose!"
+  #   @lose = true
+  # end
 
   def over?
-    lose || win? || @saved
+    board.lose? || board.win? || @saved
   end
 
-  def win?
-    board.count == options[:magnitude] ** 2 - options[:bombs]
-  end
+  # def win?
+  #   board.count == options[:magnitude] ** 2 - options[:bombs]
+  # end
 
   def run
     until over?
@@ -237,7 +271,11 @@ if __FILE__ == $PROGRAM_NAME
     saved_game.saved = false
     saved_game.run
   else
-    new_game = Game.new
+    options = {
+      magnitude: 14,
+      bombs: 10
+    }
+    new_game = Game.new(nil, options)
     new_game.run
   end
 end
